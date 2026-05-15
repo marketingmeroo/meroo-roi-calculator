@@ -1,0 +1,751 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<link rel="icon" href="meroo-icon.png" type="image/png">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Meroo · Placement ROI Calculator</title>
+<link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --purple-deep: #2D1B69;
+    --purple-main: #6B3FD4;
+    --purple-mid: #8B5CF6;
+    --purple-light: #C4B5FD;
+    --purple-pale: #EDE9FE;
+    --lavender: #DDD6FE;
+    --white: #FFFFFF;
+    --dark: #1A0F3C;
+    --gray: #6B7280;
+    --gray-light: #F9F8FF;
+    --accent-green: #10B981;
+    --accent-amber: #F59E0B;
+    --accent-rose: #F43F5E;
+  }
+
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+
+  body {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    background: linear-gradient(135deg, #1A0F3C 0%, #2D1B69 60%, #3D2080 100%);
+    min-height: 100vh;
+    color: var(--white);
+    overflow-x: hidden;
+  }
+
+  /* bg texture */
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 600px 400px at 80% 20%, rgba(139,92,246,0.15) 0%, transparent 70%),
+      radial-gradient(ellipse 400px 500px at 10% 80%, rgba(107,63,212,0.12) 0%, transparent 70%);
+    pointer-events: none;
+    z-index: 0;
+  }
+
+  .wrapper {
+    position: relative;
+    z-index: 1;
+    max-width: 960px;
+    margin: 0 auto;
+    padding: 60px 24px 80px;
+  }
+
+  /* ---- HEADER ---- */
+  .logo-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin-bottom: 40px;
+  }
+  .logo-elephant { font-size: 22px; }
+  .logo-text {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 18px;
+    font-weight: 800;
+    color: var(--white);
+    letter-spacing: -0.02em;
+  }
+  .logo-dot {
+    width: 6px; height: 6px;
+    background: var(--purple-mid);
+    border-radius: 50%;
+    animation: pulse 2s infinite;
+  }
+  @keyframes pulse { 0%,100%{opacity:1;transform:scale(1)} 50%{opacity:.5;transform:scale(1.5)} }
+
+  .header-eyebrow {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.15em;
+    text-transform: uppercase;
+    color: var(--purple-light);
+    margin-bottom: 16px;
+  }
+  .header-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: clamp(32px, 5vw, 56px);
+    font-weight: 800;
+    line-height: 1.05;
+    margin-bottom: 16px;
+  }
+  .header-title em {
+    font-style: normal;
+    background: linear-gradient(90deg, #C4B5FD, #8B5CF6);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+  }
+  .header-sub {
+    font-size: 16px;
+    color: rgba(196,181,253,0.7);
+    max-width: 520px;
+    line-height: 1.6;
+    margin-bottom: 48px;
+    font-weight: 300;
+  }
+
+  /* ---- CARD ---- */
+  .calc-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(196,181,253,0.15);
+    border-radius: 28px;
+    overflow: hidden;
+    backdrop-filter: blur(20px);
+  }
+
+  .calc-body {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 0;
+  }
+  @media (max-width: 700px) { .calc-body { grid-template-columns: 1fr; } }
+
+  /* ---- INPUTS PANEL ---- */
+  .inputs-panel {
+    padding: 40px;
+    border-right: 1px solid rgba(196,181,253,0.1);
+  }
+  @media (max-width: 700px) { .inputs-panel { border-right: none; border-bottom: 1px solid rgba(196,181,253,0.1); } }
+
+  .panel-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--purple-light);
+    margin-bottom: 28px;
+  }
+
+  .input-group {
+    margin-bottom: 28px;
+  }
+  .input-label {
+    font-size: 13px;
+    font-weight: 500;
+    color: rgba(255,255,255,0.7);
+    margin-bottom: 10px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .input-value {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 20px;
+    font-weight: 700;
+    color: var(--white);
+  }
+
+  /* slider */
+  input[type="range"] {
+    -webkit-appearance: none;
+    width: 100%;
+    height: 4px;
+    border-radius: 2px;
+    background: rgba(196,181,253,0.2);
+    outline: none;
+    cursor: pointer;
+    position: relative;
+  }
+  input[type="range"]::-webkit-slider-thumb {
+    -webkit-appearance: none;
+    width: 20px; height: 20px;
+    border-radius: 50%;
+    background: linear-gradient(135deg, var(--purple-main), var(--purple-mid));
+    cursor: pointer;
+    box-shadow: 0 0 0 4px rgba(139,92,246,0.25);
+    transition: box-shadow 0.2s;
+  }
+  input[type="range"]::-webkit-slider-thumb:hover {
+    box-shadow: 0 0 0 8px rgba(139,92,246,0.2);
+  }
+  .range-labels {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 6px;
+    font-size: 11px;
+    color: rgba(196,181,253,0.4);
+  }
+
+  .divider {
+    height: 1px;
+    background: rgba(196,181,253,0.08);
+    margin: 32px 0;
+  }
+
+  .toggle-group {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .toggle-btn {
+    padding: 8px 16px;
+    border-radius: 100px;
+    border: 1px solid rgba(196,181,253,0.2);
+    background: transparent;
+    color: rgba(255,255,255,0.5);
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .toggle-btn.active {
+    background: var(--purple-main);
+    border-color: var(--purple-main);
+    color: white;
+  }
+  .toggle-btn:hover:not(.active) {
+    border-color: rgba(196,181,253,0.4);
+    color: rgba(255,255,255,0.8);
+  }
+
+  /* ---- RESULTS PANEL ---- */
+  .results-panel {
+    padding: 40px;
+    background: rgba(107,63,212,0.08);
+    display: flex;
+    flex-direction: column;
+    gap: 0;
+  }
+
+  .results-title {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 13px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--purple-light);
+    margin-bottom: 28px;
+  }
+
+  .metric-block {
+    margin-bottom: 24px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid rgba(196,181,253,0.08);
+  }
+  .metric-block:last-of-type { border-bottom: none; }
+
+  .metric-label {
+    font-size: 12px;
+    color: rgba(196,181,253,0.6);
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    font-weight: 600;
+    margin-bottom: 6px;
+  }
+  .metric-value {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 36px;
+    font-weight: 800;
+    line-height: 1;
+    color: var(--white);
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .metric-value.green { color: #34D399; }
+  .metric-value.amber { color: #FCD34D; }
+
+  .metric-sub {
+    font-size: 12px;
+    color: rgba(196,181,253,0.5);
+    margin-top: 4px;
+    line-height: 1.5;
+  }
+
+  /* ---- SAVINGS HIGHLIGHT ---- */
+  .savings-highlight {
+    background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(16,185,129,0.05));
+    border: 1px solid rgba(52,211,153,0.25);
+    border-radius: 16px;
+    padding: 24px;
+    margin-top: 8px;
+    text-align: center;
+  }
+  .savings-label {
+    font-size: 11px;
+    font-weight: 700;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: #34D399;
+    margin-bottom: 8px;
+  }
+  .savings-num {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 48px;
+    font-weight: 800;
+    color: #34D399;
+    line-height: 1;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .savings-period {
+    font-size: 13px;
+    color: rgba(52,211,153,0.6);
+    margin-top: 4px;
+  }
+
+  /* ---- BOTTOM BAR ---- */
+  .calc-footer {
+    padding: 24px 40px;
+    background: rgba(0,0,0,0.2);
+    border-top: 1px solid rgba(196,181,253,0.08);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 20px;
+    flex-wrap: wrap;
+  }
+  .footer-insight {
+    font-size: 13px;
+    color: rgba(196,181,253,0.6);
+    max-width: 420px;
+    line-height: 1.5;
+  }
+  .footer-insight strong { color: var(--purple-light); }
+
+  .cta-btn {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    background: linear-gradient(135deg, var(--purple-main), var(--purple-mid));
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 14px 24px;
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 14px;
+    font-weight: 600;
+    cursor: pointer;
+    text-decoration: none;
+    transition: transform 0.2s, box-shadow 0.2s;
+    white-space: nowrap;
+  }
+  .cta-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 12px 40px rgba(107,63,212,0.4);
+  }
+
+  /* ---- BENCHMARK STRIP ---- */
+  .benchmarks {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin-top: 32px;
+  }
+  @media (max-width: 600px) { .benchmarks { grid-template-columns: 1fr; } }
+
+  .benchmark-card {
+    background: rgba(255,255,255,0.04);
+    border: 1px solid rgba(196,181,253,0.1);
+    border-radius: 16px;
+    padding: 20px;
+    text-align: center;
+  }
+  .benchmark-num {
+    font-family: 'Plus Jakarta Sans', sans-serif;
+    font-size: 28px;
+    font-weight: 800;
+    color: var(--purple-light);
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .benchmark-label {
+    font-size: 12px;
+    color: rgba(196,181,253,0.5);
+    line-height: 1.4;
+  }
+
+  /* ---- PROGRESS BAR ---- */
+  .progress-wrap {
+    margin-top: 8px;
+  }
+  .progress-bar-bg {
+    height: 6px;
+    background: rgba(196,181,253,0.1);
+    border-radius: 3px;
+    overflow: hidden;
+    margin-top: 8px;
+  }
+  .progress-bar-fill {
+    height: 100%;
+    border-radius: 3px;
+    background: linear-gradient(90deg, var(--purple-main), #34D399);
+    transition: width 0.5s cubic-bezier(0.34, 1.56, 0.64, 1);
+  }
+  .progress-label {
+    display: flex;
+    justify-content: space-between;
+    font-size: 11px;
+    color: rgba(196,181,253,0.4);
+    margin-top: 4px;
+  }
+
+  /* number animation */
+  .counting { animation: countPop 0.3s cubic-bezier(0.34, 1.56, 0.64, 1); }
+  @keyframes countPop { 0%{transform:scale(0.9);opacity:0.5} 100%{transform:scale(1);opacity:1} }
+
+  /* ---- FOOTER NOTE ---- */
+  .page-footer {
+    text-align: center;
+    margin-top: 48px;
+    font-size: 12px;
+    color: rgba(196,181,253,0.3);
+    line-height: 1.6;
+  }
+  .page-footer a { color: rgba(196,181,253,0.5); text-decoration: none; }
+</style>
+</head>
+<body>
+<div class="wrapper">
+
+  <!-- LOGO -->
+  <!-- LOGO -->
+  <div class="logo-badge">
+    <img src="meroo-light-logo-horizontal.svg" height="40" alt="Meroo">
+  </div>
+  <!-- HEADER -->
+  <div class="header-eyebrow">ROI Calculator · Talent Acquisition</div>
+  <h1 class="header-title">What does a bad placement<br><em>really cost your agency?</em></h1>
+  <p class="header-sub">Move the sliders to match your operation. See in real time how Meroo's behavioral screening changes the math — even before the first interview.</p>
+
+  <!-- CALCULATOR CARD -->
+  <div class="calc-card">
+    <div class="calc-body">
+
+      <!-- LEFT: INPUTS -->
+      <div class="inputs-panel">
+        <div class="panel-title">Your agency today</div>
+
+        <!-- Placements per month -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Placements per month</span>
+            <span class="input-value" id="val-placements">12</span>
+          </div>
+          <input type="range" id="sl-placements" min="2" max="50" value="12" step="1">
+          <div class="range-labels"><span>2</span><span>50+</span></div>
+        </div>
+
+        <!-- Avg placement fee -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Avg. placement fee</span>
+            <span class="input-value" id="val-fee">$6,000</span>
+          </div>
+          <input type="range" id="sl-fee" min="2000" max="25000" value="6000" step="500">
+          <div class="range-labels"><span>$2K</span><span>$25K</span></div>
+        </div>
+
+        <!-- Candidates screened per role -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Candidates screened per role</span>
+            <span class="input-value" id="val-screened">18</span>
+          </div>
+          <input type="range" id="sl-screened" min="5" max="60" value="18" step="1">
+          <div class="range-labels"><span>5</span><span>60</span></div>
+        </div>
+
+        <!-- Hours per candidate -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Recruiter hours per candidate</span>
+            <span class="input-value" id="val-hours">2.5h</span>
+          </div>
+          <input type="range" id="sl-hours" min="0.5" max="8" value="2.5" step="0.5">
+          <div class="range-labels"><span>0.5h</span><span>8h</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Bad placement rate -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Bad placement rate (90-day turnover)</span>
+            <span class="input-value" id="val-badrate">18%</span>
+          </div>
+          <input type="range" id="sl-badrate" min="5" max="40" value="18" step="1">
+          <div class="range-labels"><span>5%</span><span>40%</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <!-- Recruiter hourly cost -->
+        <div class="input-group">
+          <div class="input-label">
+            <span>Recruiter hourly cost</span>
+            <span class="input-value" id="val-recruiter">$35/h</span>
+          </div>
+          <input type="range" id="sl-recruiter" min="15" max="100" value="35" step="5">
+          <div class="range-labels"><span>$15</span><span>$100</span></div>
+        </div>
+
+        <div class="divider"></div>
+
+        <div class="panel-title" style="margin-bottom:16px;">With Meroo, your team shortlists</div>
+        <div class="toggle-group">
+          <button class="toggle-btn active" data-val="0.6">Top 3</button>
+          <button class="toggle-btn" data-val="0.4">Top 5</button>
+          <button class="toggle-btn" data-val="0.2">Top 10</button>
+        </div>
+        <p style="font-size:12px; color:rgba(196,181,253,0.4); margin-top:10px;">Meroo reduces screening to only behavioral-fit candidates</p>
+
+      </div>
+
+      <!-- RIGHT: RESULTS -->
+      <div class="results-panel">
+        <div class="results-title">Your numbers, recalculated</div>
+
+        <div class="metric-block">
+          <div class="metric-label">Monthly hours spent on screening</div>
+          <div class="metric-value amber" id="res-hours">540h</div>
+          <div class="metric-sub">Across your full team — time Meroo compresses dramatically</div>
+          <div class="progress-wrap">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="bar-hours" style="width:70%"></div>
+            </div>
+            <div class="progress-label">
+              <span>With Meroo: <strong id="res-hours-meroo" style="color:var(--purple-light)">189h</strong></span>
+              <span id="res-hours-pct" style="color:#34D399">−65%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-label">Monthly cost of screening time</div>
+          <div class="metric-value amber" id="res-screencost">$18,900</div>
+          <div class="metric-sub">Recruiter time only, not including tools</div>
+          <div class="progress-wrap">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="bar-screencost" style="width:70%"></div>
+            </div>
+            <div class="progress-label">
+              <span>With Meroo: <strong id="res-screencost-meroo" style="color:var(--purple-light)">$6,615</strong></span>
+              <span id="res-screencost-pct" style="color:#34D399">−65%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-label">Revenue lost to bad placements / mo</div>
+          <div class="metric-value" style="color:#F87171;" id="res-badplacement">$12,960</div>
+          <div class="metric-sub">Replacements, refunds & client churn risk</div>
+          <div class="progress-wrap">
+            <div class="progress-bar-bg">
+              <div class="progress-bar-fill" id="bar-bad" style="width:55%; background: linear-gradient(90deg,#F87171,#FCD34D)"></div>
+            </div>
+            <div class="progress-label">
+              <span>With Meroo: <strong id="res-bad-meroo" style="color:var(--purple-light)">$3,888</strong></span>
+              <span id="res-bad-pct" style="color:#34D399">−70%</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="metric-block">
+          <div class="metric-label">Time-to-shortlist reduction</div>
+          <div class="metric-value green" id="res-ttsl">−65%</div>
+          <div class="metric-sub" id="res-ttsl-sub">From ~18 candidates reviewed to ~6 with fit pre-validated</div>
+        </div>
+
+        <!-- SAVINGS HIGHLIGHT -->
+        <div class="savings-highlight">
+          <div class="savings-label">Total monthly savings with Meroo</div>
+          <div class="savings-num" id="res-total">$23,337</div>
+          <div class="savings-period">In recovered time + avoided losses · per month</div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- FOOTER BAR -->
+    <div class="calc-footer">
+      <div class="footer-insight">
+        With Meroo, your team interviews <strong>only pre-screened candidates</strong>. <strong>89% of bad placements fail for behavioral reasons</strong> — Meroo catches that before the first call.
+      </div>
+      <a href="https://calendly.com/david-getmeroo/30min" class="cta-btn" target="_blank">
+        Schedule a demo →
+      </a>
+    </div>
+  </div>
+
+  <!-- BENCHMARKS -->
+  <div class="benchmarks">
+    <div class="benchmark-card">
+      <div class="benchmark-num">44d</div>
+      <div class="benchmark-label">Average days to fill a remote role without behavioral pre-screening</div>
+    </div>
+    <div class="benchmark-card">
+      <div class="benchmark-num">89%</div>
+      <div class="benchmark-label">Of bad hires fail due to soft-skill or behavioral mismatch, not technical skills</div>
+    </div>
+    <div class="benchmark-card">
+      <div class="benchmark-num">3x</div>
+      <div class="benchmark-label">One bad placement costs 3x the annual salary — before you count the client you just lost.</div>
+    </div>
+  </div>
+
+  <!-- PAGE FOOTER -->
+  <div class="page-footer">
+    <p>Built by <a href="https://getmeroo.com">Meroo</a> · Behavioral screening for nearshore LatAm talent · <a href="https://calendly.com/david-getmeroo/30min">Schedule a demo</a></p>
+    <p style="margin-top:6px;">Estimates based on SHRM, LinkedIn Global Talent Trends & Deloitte benchmarks. Your actual results may vary.</p>
+  </div>
+
+</div>
+
+<script>
+  // State
+  let state = {
+    placements: 12,
+    fee: 6000,
+    screened: 18,
+    hours: 2.5,
+    badrate: 18,
+    recruiter: 35,
+    merooRatio: 0.6  // fraction of candidates still screened after Meroo
+  };
+
+  // Slider bindings
+  const sliders = [
+    { id: 'sl-placements', key: 'placements', display: 'val-placements', fmt: v => v },
+    { id: 'sl-fee',        key: 'fee',        display: 'val-fee',        fmt: v => '$' + Number(v).toLocaleString() },
+    { id: 'sl-screened',   key: 'screened',   display: 'val-screened',   fmt: v => v },
+    { id: 'sl-hours',      key: 'hours',      display: 'val-hours',      fmt: v => v + 'h' },
+    { id: 'sl-badrate',    key: 'badrate',    display: 'val-badrate',    fmt: v => v + '%' },
+    { id: 'sl-recruiter',  key: 'recruiter',  display: 'val-recruiter',  fmt: v => '$' + v + '/h' },
+  ];
+
+  sliders.forEach(({ id, key, display, fmt }) => {
+    const el = document.getElementById(id);
+    el.addEventListener('input', () => {
+      state[key] = parseFloat(el.value);
+      document.getElementById(display).textContent = fmt(el.value);
+      recalculate();
+    });
+  });
+
+  // Toggle buttons
+  document.querySelectorAll('.toggle-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+      document.querySelectorAll('.toggle-btn').forEach(b => b.classList.remove('active'));
+      btn.classList.add('active');
+      state.merooRatio = parseFloat(btn.dataset.val);
+      recalculate();
+    });
+  });
+
+  function fmt$(n) {
+    if (n >= 1000000) return '$' + (n/1000000).toFixed(1) + 'M';
+    if (n >= 1000) return '$' + Math.round(n/1000) + 'K';
+    return '$' + Math.round(n).toLocaleString();
+  }
+
+  function fmtH(n) {
+    if (n >= 1000) return Math.round(n/100)/10 + 'K h';
+    return Math.round(n) + 'h';
+  }
+
+  function animateValue(el) {
+    el.classList.remove('counting');
+    void el.offsetWidth;
+    el.classList.add('counting');
+  }
+
+  function recalculate() {
+    const { placements, fee, screened, hours, badrate, recruiter, merooRatio } = state;
+
+    // Without Meroo
+    const totalCandidatesPerMonth = placements * screened;
+    const screeningHoursPerMonth = totalCandidatesPerMonth * hours;
+    const screeningCostPerMonth = screeningHoursPerMonth * recruiter;
+    const badPlacementsPerMonth = placements * (badrate / 100);
+    const badPlacementCost = badPlacementsPerMonth * fee * 0.6; // 60% of fee lost (refund + re-work)
+
+    // With Meroo
+    const merooHours = screeningHoursPerMonth * merooRatio;
+    const merooCost = merooHours * recruiter;
+    const merooBadRate = badrate * 0.3; // 70% reduction in bad placements
+    const merooBadCost = placements * (merooBadRate / 100) * fee * 0.6;
+
+    // Savings
+    const hoursaved = screeningHoursPerMonth - merooHours;
+    const costsaved = screeningCostPerMonth - merooCost;
+    const badsaved = badPlacementCost - merooBadCost;
+    const totalSaved = costsaved + badsaved;
+
+    // Reduction pct
+    const hoursPct = Math.round((hoursaved / screeningHoursPerMonth) * 100);
+    const ttslReduction = Math.round((1 - merooRatio) * 100);
+
+    // Update DOM
+    const updates = [
+      ['res-hours', fmtH(screeningHoursPerMonth), 'amber'],
+      ['res-hours-meroo', fmtH(merooHours)],
+      ['res-hours-pct', '−' + hoursPct + '%'],
+      ['res-screencost', fmt$(screeningCostPerMonth), 'amber'],
+      ['res-screencost-meroo', fmt$(merooCost)],
+      ['res-screencost-pct', '−' + hoursPct + '%'],
+      ['res-badplacement', fmt$(badPlacementCost)],
+      ['res-bad-meroo', fmt$(merooBadCost)],
+      ['res-bad-pct', '−70%'],
+      ['res-ttsl', '−' + ttslReduction + '%', 'green'],
+      ['res-total', fmt$(totalSaved)],
+    ];
+
+    updates.forEach(([id, val]) => {
+      const el = document.getElementById(id);
+      if (el) {
+        el.textContent = val;
+        animateValue(el);
+      }
+    });
+
+    // Progress bars
+    const hPct = Math.min(100, (merooHours / screeningHoursPerMonth) * 100);
+    document.getElementById('bar-hours').style.width = (100 - hPct) + '%';
+    document.getElementById('bar-screencost').style.width = (100 - hPct) + '%';
+
+    const bPct = Math.min(100, (merooBadCost / (badPlacementCost || 1)) * 100);
+    document.getElementById('bar-bad').style.width = (100 - bPct * 0.7) + '%';
+
+    // Subtitle update
+    const merooCount = Math.round(screened * merooRatio);
+    document.getElementById('res-ttsl-sub').textContent =
+      `From ~${screened} candidates reviewed to ~${merooCount} with fit pre-validated`;
+
+    // Payback
+    const dailySaving = totalSaved / 30;
+    const paybackDays = Math.round(200 / (dailySaving || 1)); // Meroo ~$200/mo estimate
+    let paybackText;
+    if (paybackDays <= 1) paybackText = 'less than 1 day';
+    else if (paybackDays <= 7) paybackText = `less than ${paybackDays} days`;
+    else paybackText = `about ${Math.round(paybackDays/7)} weeks`;
+    document.getElementById('res-payback').textContent = paybackText;
+  }
+
+  // Init
+  recalculate();
+</script>
+</body>
+</html>
